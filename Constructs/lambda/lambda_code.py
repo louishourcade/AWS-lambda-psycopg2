@@ -1,11 +1,7 @@
 import psycopg2
 
-def handler(event,context):
-    print(f"psycopg2 successfully imported")
 
-    return {
-        "Status": "SUCCESS"
-    }
+def handler(event, context):
+    """Function that checks whether psycopg2 is succesfully imported or not"""
 
-if __name__=="__main__":
-    handler(None,None)
+    return {"Status": "psycopg2 successfully imported"}

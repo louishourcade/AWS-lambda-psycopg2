@@ -13,7 +13,7 @@ LambdaStack(
     app,
     "AWSLambdaPyscopg2",
     env=cdk.Environment(account=aws_acccount, region=region),
-    tags={"Project": "AWS Lambda function with pyscopg2 library"}
+    tags={"Project": "AWS Lambda function with pyscopg2 library"},
 )
 
 app.synth()
