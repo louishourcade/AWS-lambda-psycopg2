@@ -33,7 +33,7 @@ To illustrate the challenges developers might face when using the `psycopg2` lib
 * One Lambda function with the **Python3.8 runtime created from a .zip file**. The `psycopg2` and `libraries` are installed in this .zip deployment package with [pip](https://pypi.org/project/pip/).
 * One Lambda function with the **Python3.8 runtime created from a Dockerfile**. The dockerfile installs the `psycopg2` and `pandas` libraries into the Lambda image.
 
-<img src="assets/img/lambdas_img.PNG" width="600" class="center">
+<p style="text-align:center;"><img src="assets/img/lambdas_img.PNG" width="450" class="center"></p>
 
 With these two Lambda functions, we illustrate that installing the `pandas` library and its dependencies in a zip file is enough for your Lambda script to run.
 This is however not the case for the `psycopg2` for reasons we will detail in [Run the Lambda function created from the .zip file](#zip). We then see that developers can overcome this limitation by creating their Lambda functions
