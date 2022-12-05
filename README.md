@@ -191,7 +191,7 @@ While this works with other python libraries such as `pandas`, adding the `psyco
 However, developers can edit the Lambda image by defining their own Dockerfile. This notably enable developers to install all required PostgreSQL libraries
 in the Lambda image, permitting the use of `psycopg2` in Lambda functions.
 
-> :information: **Resources deletion**: By following this example, you deployed AWS resources in your account.
+> :hammer: **Resources deletion**: By following this example, you deployed AWS resources in your account.
 > You can remove them anytime by deleting the **AWSLambdaPyscopg2** Cloudformation stack from the Cloudformation console.
 
 
