@@ -98,12 +98,101 @@ cdk deploy AWSLambdaPyscopg2
 
 Confirm the deployment in the terminal, wait until the CloudFormation stack is deployed, and you're done 🎉
 
-## Test partial retries on the state machine
+## Run the Lambda functions
 
 #### Explanations about the resources deployed
 
+The AWS stack deploys 3 resources:
+* An [IAM role](https://docs.aws.amazon.com/IAM/latest/UserGuide/id_roles.html) for the Lambda functions
+* A Lambda function with a Python3.8 runtime, deployed from the `Constructs/lambda/lambda_deploy.zip` file
+* A Lambda function with a Python3.8 runtime, deployed from the `Dockerfile` under the `Constructs` folder.
+
+The script of both Lambda functions only checks that the `pandas` and `psycopg2` libraries are successfully imported:
+
+```python
+import pandas
+print("pandas successfully imported")
+
+import psycopg2
+print("psycopg2 successfully imported")
+
+def handler(event, context):
+    """Function that checks whether psycopg2  and pandas are successfully imported or not"""
+    return {"Status": "psycopg2 and pandas successfully imported"}
+```
+
+The `lambda_deploy.zip` is built with `Constructs/lambda/build.sh`. This bash script creates a folder, insert the Lambda script, install the 
+`pandas` and `psycopg2` libraries, and generate the zip file. So if you want to generate the zip file yourself, just run this bash script.
+
+The `Dockerfile` starts from the AWS-provided based image for Lambda with a python3.8 runtime. We then install `pandas` and `psycopg2` on top of this
+default image.
+
 #### Run the Lambda function created from the .zip file <a name="zip"></a>
 
-#### Run the Lambda function created from the Dockerfile
+On the AWS console, select the `lambda-from-zip` Lambda function, and create a test event to invoke it.
+
+When invoked, it should raise an error:
+
+![zip_error](assets/img/Zip_test.PNG)
+
+When looking at the Cloudwatch logs, you can see that the `pandas` library has been imported successfully, but that is not the case
+of the `psycopg2` library:
+
+![zip_logs](assets/img/Zip_logs.PNG)
+
+In summary, Lambda is able to use `pandas`, but not `psycopg2` **even though we packaged them similarly in the .zip file**.
+This is error is actually due to Lambda missing the required PostgreSQL libraries in the default AMI image.
+So if you want to use `psycopg2` within your Lambda function, either you edit the Lambda AMI (what we do in [Run the Lambda function created from the Dockerfile](#docker)), 
+or you compile `psycopg2` with the PostgreSQL `lipq.so` library statically linked `libpq` library instead of the default dynamic link (more on this method [here](https://github.com/jkehler/awslambda-psycopg2))
+
+#### Run the Lambda function created from the Dockerfile <a name="docker"></a>
+
+On the AWS console, select the `lambda-from-docker` Lambda function, and create a test event to invoke it.
+
+When invoked, it should run successfully:
+
+![zip_error](assets/img/Docker_test.PNG)
+
+Why does it work in this case ?
+
+Instead of creating the Lambda function from a .zip file, we built it from the following Dockerfile:
+
+```dockerfile
+# Start from lambda Python3.8 image
+FROM public.ecr.aws/lambda/python:3.8
+
+# Copy the lambda code, together with its requirements
+COPY lambda/requirements.txt ${LAMBDA_TASK_ROOT}
+COPY lambda/lambda_code.py ${LAMBDA_TASK_ROOT}
+
+# Install postgresql-devel in your image
+RUN yum install -y gcc postgresql-devel
+
+# install the requirements for the Lambda code
+RUN pip3 install -r requirements.txt --target "${LAMBDA_TASK_ROOT}"
+
+# Command can be overwritten by providing a different command in the template directly.
+CMD ["lambda_code.handler"]
+```
+
+It takes the AWS-provided Lambda image for the python3.8 runtime, and install [postgresql-devel](https://yum-info.contradodigital.com/view-package/updates/postgresql-devel/)
+which contains libraries needed to compile applications that directly interact with PostgreSQL management server. It also installs
+`pandas` and `psycopg2` indicated in the `requirements.txt` file.
+
+Creating a Lambda function from a Dockerfile thus enable developers to easily edit the image used by their Lambda functions,
+and therefore use `psycopg2` in Lambda to interact with Postgres databases.
 
 ## Conclusion
+
+This code sample illustrates how developers can use the `psycopg2` library within their Lambda functions to interact with their postgres database.
+
+While this works with other python libraries such as `pandas`, adding the `psycopg2` library to a .zip Lambda deployment package is not enough because Lambda default AMI does not include the required PostgreSQL libraries.
+
+However, developers can edit the Lambda image by defining their own Dockerfile. This notably enable developers to install all required PostgreSQL libraries
+in the Lambda image, permitting the use of `psycopg2` in Lambda functions.
+
+> :information: **Resources deletion**: By following this example, you deployed AWS resources in your account.
+> You can remove them anytime by deleting the **AWSLambdaPyscopg2** Cloudformation stack from the Cloudformation console.
+
+
+[![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
