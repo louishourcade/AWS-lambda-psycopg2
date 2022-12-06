@@ -1,4 +1,4 @@
-# Deploy AWS Step Functions that supports partial runs
+# Import psycopg2 in AWS Lambda to interact with your postgres database
 
 [Psycopg](https://pypi.org/project/psycopg2/) is the most popular PostgresSQL database adapter for Python. It enables developers 
 to write a Python application that interacts with a PostgreSQL database.
